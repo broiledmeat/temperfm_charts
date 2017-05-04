@@ -22,18 +22,15 @@ sys.path.remove(os.path.dirname(__file__))
 
 def main():
     from docopt import docopt
-    from temperfm_charts import __version__
-    from temperfm import config, __version__ as __temperfm_version__
+    import temperfm
+    import temperfm_charts
 
-    args = docopt(__doc__, version=f'TemperFM Charts {__version__}, TemperFM {__temperfm_version__}')
+    args = docopt(__doc__, version=f'TemperFM Charts {temperfm_charts.__version__}, TemperFM {temperfm.__version__}')
 
     try:
-        config.load(args['--config'])
+        temperfm.load_config(args['--config'] or temperfm.DEFAULT_CONFIG_PATH)
 
         if args['weekly']:
-            from temperfm import get_user_weekly_artists
-            from temperfm_charts import render_user_weekly_artists
-
             username = args['<username>']
             filepath = args.get('<filepath>') or f'weekly_{username}.svg'
             kwargs = {}
@@ -43,8 +40,8 @@ def main():
             except (TypeError, ValueError):
                 pass
 
-            report = get_user_weekly_artists(username, **kwargs)
-            render_user_weekly_artists(report, filepath)
+            report = temperfm.get_user_weekly_artists(username, **kwargs)
+            temperfm_charts.render_user_weekly_artists(report, filepath)
     except RuntimeError as e:
         sys.stderr.write(f'{e}\n')
         exit(1)

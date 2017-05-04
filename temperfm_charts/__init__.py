@@ -14,10 +14,10 @@ def _get_weekly_score_totals(report):
 
     # Get total weekly scores
     for i, artist_plays in enumerate(report.artist_weekly):
-        weekly_totals.append([0] * len(report.profile.clusters))
+        weekly_totals.append([0] * len(report.clusters))
         for artist in artist_plays:
             scores = [x * artist.plays for x in artist_scores.get(artist.name, [])]
-            for j in range(max(len(report.profile.clusters), len(scores))):
+            for j in range(max(len(report.clusters), len(scores))):
                 weekly_totals[i][j] += scores[j]
 
     return weekly_totals
@@ -126,7 +126,8 @@ def render_user_weekly_artists(report, file_path, size=(420, 300)):
     # Build cluster paths
     cluster_positions = []
     last_scores = [0] * len(weekly_scores)
-    for i in range(len(report.profile.clusters) - 1):
+    """:type: list[float]"""
+    for i in range(len(report.clusters) - 1):
         scores = [week_scores[i] for week_scores in weekly_scores]
         scores = [scores[j] + last_scores[j] for j in range(len(scores))]
         cluster_positions.append([score * graph_size[1] for score in scores])
@@ -147,14 +148,12 @@ def render_user_weekly_artists(report, file_path, size=(420, 300)):
     # Cluster fill
     points_prev = [(0, 0), (graph_size[0], 0)]
     for i, positions in enumerate(cluster_positions):
-        cluster = report.profile.clusters[i]
+        cluster = report.clusters[i]
         x_span = graph_size[0] / (len(positions) - 1)
         points = [(x * x_span, y) for x, y in enumerate(positions)]
 
-        commands = [f'M0,{points[0][1]}'] + \
-                   _get_monotonic_spline_commands(points) + \
-                   [f'L{graph_size[0]},{points_prev[-1][1]}'] + \
-                   _get_monotonic_spline_commands(list(reversed(points_prev)))
+        commands = [f'M0,{points[0][1]}'] + _get_monotonic_spline_commands(points) + \
+            [f'L{graph_size[0]},{points_prev[-1][1]}'] + _get_monotonic_spline_commands(list(reversed(points_prev)))
         graph.add(dwg.path(commands, fill=_color_to_css(cluster.color)))
 
         points_prev = points
@@ -177,7 +176,7 @@ def render_user_weekly_artists(report, file_path, size=(420, 300)):
 
     # # Cluster labels
     last_y = 0
-    for i, cluster in enumerate(report.profile.clusters):
+    for i, cluster in enumerate(report.clusters):
         y = cluster_positions[i][0]
         if i > 0:
             y += cluster_positions[i - 1][0]
